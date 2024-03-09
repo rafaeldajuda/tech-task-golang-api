@@ -2,6 +2,7 @@ package handler
 
 import "github.com/gofiber/fiber/v2"
 
+// authentication
 func Login(c *fiber.Ctx) (err error) {
 	return c.SendString("Login")
 }
@@ -10,6 +11,7 @@ func Register(c *fiber.Ctx) (err error) {
 	return c.SendString("Register")
 }
 
+// tasks
 func GetTasks(c *fiber.Ctx) (err error) {
 	return c.SendString("GetTasks")
 }
