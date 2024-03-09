@@ -1,14 +1,31 @@
 package handler
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"net/http"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/log"
+	"github.com/rafaeldajuda/tech-task-golang-api/entity"
+	"github.com/rafaeldajuda/tech-task-golang-api/pkg"
+)
 
 // authentication
-func Login(c *fiber.Ctx) (err error) {
+func PostLogin(c *fiber.Ctx) (err error) {
 	return c.SendString("Login")
 }
 
-func Register(c *fiber.Ctx) (err error) {
-	return c.SendString("Register")
+func PostRegister(c *fiber.Ctx) (err error) {
+	user := entity.User{}
+	err = c.BodyParser(&user)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "1", Message: "register error"})
+	}
+	err = pkg.Register(user)
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "2", Message: "register error"})
+	}
+	return c.Status(http.StatusCreated).SendString("")
 }
 
 // tasks
