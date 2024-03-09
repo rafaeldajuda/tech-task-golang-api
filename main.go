@@ -12,6 +12,8 @@ func main() {
 	db := utils.Connection()
 	utils.ConfigTables(db)
 
+	// app
+	handler := handler.NewHandler(db)
 	app := fiber.New()
 
 	app.Post("/api/login", handler.PostLogin)

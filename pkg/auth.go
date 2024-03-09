@@ -1,9 +1,11 @@
 package pkg
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
+	"github.com/rafaeldajuda/tech-task-golang-api/utils"
 )
 
 func Login(user entity.User) (token string, err error) {
@@ -13,16 +15,21 @@ func Login(user entity.User) (token string, err error) {
 	return
 }
 
-func Register(user entity.User) (err error) {
+func Register(user entity.User, db *sql.DB) (err error) {
 	err = registerValidation(user)
 	if err != nil {
 		return
 	}
-	// err = checkUser(user)
-	// if err != nil {
-	// 	return
-	// }
+
 	// validar no banco de dados
+	exist, err := utils.GetUser(user.Email, user.Senha, db)
+	if err != nil {
+		return
+	}
+	if exist {
+		return errors.New("user exist")
+	}
+
 	// guardar usuário
 	// retornar resposta
 	return

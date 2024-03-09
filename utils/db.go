@@ -70,3 +70,19 @@ func createTableTask(db *sql.DB, ctx context.Context) {
 	}
 	log.Debug("table tarefa ok")
 }
+
+func GetUser(email string, senha string, db *sql.DB) (exist bool, err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "SELECT ID FROM usuario WHERE Email=? AND Senha=?"
+	result, err := db.QueryContext(ctx, query, email, senha)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+	exist = result.Next()
+
+	return
+}
