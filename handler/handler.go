@@ -2,12 +2,14 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 	"github.com/rafaeldajuda/tech-task-golang-api/pkg"
+	"github.com/rafaeldajuda/tech-task-golang-api/utils"
 )
 
 type Handler struct {
@@ -27,6 +29,7 @@ func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "3", Message: "login error"})
 	}
 
+	// gerar token
 	token, err := pkg.Login(user, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
@@ -55,6 +58,13 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 
 // tasks
 func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
+	fmt.Println(c.GetReqHeaders())
+	token := c.GetReqHeaders()["Token"][0]
+	err = utils.ValidToken(token)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "5", Message: "get tasks error"})
+	}
 	return c.SendString("GetTasks")
 }
 

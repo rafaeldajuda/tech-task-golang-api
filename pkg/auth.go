@@ -3,6 +3,7 @@ package pkg
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 	"github.com/rafaeldajuda/tech-task-golang-api/utils"
@@ -24,8 +25,13 @@ func Login(user entity.User, db *sql.DB) (token string, err error) {
 		return "", errors.New("user not exist")
 	}
 
-	// retornar token
-	return "token123", nil
+	// gerar token
+	token, err = utils.GenToken(user)
+	if err != nil {
+		return "", fmt.Errorf("error gen token: %s", err.Error())
+	}
+
+	return
 }
 
 func Register(user entity.User, db *sql.DB) (err error) {
