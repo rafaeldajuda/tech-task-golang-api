@@ -8,15 +8,28 @@ import (
 	"github.com/rafaeldajuda/tech-task-golang-api/utils"
 )
 
-func Login(user entity.User) (token string, err error) {
+func Login(user entity.User, db *sql.DB) (token string, err error) {
 	// validar campos
-	// checar se usuário existe no banco
-	// retornar resposta
-	return
+	err = fieldValidation(user, "login")
+	if err != nil {
+		return
+	}
+
+	// validar no banco de dados
+	exist, err := utils.GetUser(user.Email, user.Senha, db)
+	if err != nil {
+		return
+	}
+	if !exist {
+		return "", errors.New("user not exist")
+	}
+
+	// retornar token
+	return "token123", nil
 }
 
 func Register(user entity.User, db *sql.DB) (err error) {
-	err = registerValidation(user)
+	err = fieldValidation(user, "register")
 	if err != nil {
 		return
 	}
@@ -31,12 +44,16 @@ func Register(user entity.User, db *sql.DB) (err error) {
 	}
 
 	// guardar usuário
-	// retornar resposta
+	err = utils.InsertUser(user.Nome, user.Email, user.Senha, db)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
-func registerValidation(user entity.User) error {
-	if user.Nome == "" {
+func fieldValidation(user entity.User, operation string) error {
+	if user.Nome == "" && operation == "register" {
 		return errors.New("missing field Nome")
 	} else if user.Email == "" {
 		return errors.New("missing field Email")

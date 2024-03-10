@@ -20,7 +20,20 @@ func NewHandler(db *sql.DB) Handler {
 
 // authentication
 func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
-	return c.SendString("Login")
+	user := entity.User{}
+	err = c.BodyParser(&user)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "3", Message: "login error"})
+	}
+
+	token, err := pkg.Login(user, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "4", Message: "login error"})
+	}
+
+	return c.Status(http.StatusOK).SendString(token)
 }
 
 func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
@@ -30,11 +43,13 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "1", Message: "register error"})
 	}
+
 	err = pkg.Register(user, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "2", Message: "register error"})
 	}
+
 	return c.Status(http.StatusCreated).SendString("")
 }
 

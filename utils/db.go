@@ -86,3 +86,17 @@ func GetUser(email string, senha string, db *sql.DB) (exist bool, err error) {
 
 	return
 }
+
+func InsertUser(nome string, email string, senha string, db *sql.DB) (err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := fmt.Sprintf(`INSERT INTO usuario (Nome, Email, Senha) VALUES ("%s", "%s", "%s");`, nome, email, senha)
+	_, err = db.ExecContext(ctx, query)
+	if err != nil {
+		return
+	}
+
+	return
+}
