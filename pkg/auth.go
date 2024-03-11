@@ -11,13 +11,13 @@ import (
 
 func Login(user entity.User, db *sql.DB) (token string, err error) {
 	// validar campos
-	err = fieldValidation(user, "login")
+	err = fieldUserValidation(user, "login")
 	if err != nil {
 		return
 	}
 
 	// validar no banco de dados
-	exist, err := utils.GetUser(user.Email, user.Senha, db)
+	id, exist, err := utils.GetUser(user.Email, user.Senha, db)
 	if err != nil {
 		return
 	}
@@ -26,6 +26,7 @@ func Login(user entity.User, db *sql.DB) (token string, err error) {
 	}
 
 	// gerar token
+	user.ID = id
 	token, err = utils.GenToken(user)
 	if err != nil {
 		return "", fmt.Errorf("error gen token: %s", err.Error())
@@ -35,13 +36,13 @@ func Login(user entity.User, db *sql.DB) (token string, err error) {
 }
 
 func Register(user entity.User, db *sql.DB) (err error) {
-	err = fieldValidation(user, "register")
+	err = fieldUserValidation(user, "register")
 	if err != nil {
 		return
 	}
 
 	// validar no banco de dados
-	exist, err := utils.GetUser(user.Email, user.Senha, db)
+	_, exist, err := utils.GetUser(user.Email, user.Senha, db)
 	if err != nil {
 		return
 	}
@@ -58,7 +59,7 @@ func Register(user entity.User, db *sql.DB) (err error) {
 	return
 }
 
-func fieldValidation(user entity.User, operation string) error {
+func fieldUserValidation(user entity.User, operation string) error {
 	if user.Nome == "" && operation == "register" {
 		return errors.New("missing field Nome")
 	} else if user.Email == "" {

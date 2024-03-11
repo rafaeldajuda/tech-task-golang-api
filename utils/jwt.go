@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,15 +12,16 @@ const SECRET_KEY = "secret123"
 
 func GenToken(user entity.User) (token string, err error) {
 	claims := jwt.MapClaims{
-		"Nome": user.Email,
-		"exp":  time.Now().Add(time.Minute * 5).Local().Unix(),
+		"ID":    user.ID,
+		"Email": user.Email,
+		"exp":   time.Now().Add(time.Minute * 5).Local().Unix(),
 	}
 	tk := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token, err = tk.SignedString([]byte(SECRET_KEY))
 	return
 }
 
-func ValidToken(token string) (err error) {
+func ValidToken(token string) (id int64, email string, err error) {
 	tk, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
@@ -33,11 +33,9 @@ func ValidToken(token string) (err error) {
 	}
 
 	if claims, ok := tk.Claims.(jwt.MapClaims); ok {
-		fmt.Println(claims["Nome"], claims["exp"])
-		exp := int64(claims["exp"].(float64))
-		if time.Now().Local().Unix() > exp {
-			return errors.New("invalid exp token")
-		}
+		fmt.Println(claims["ID"], claims["Email"], claims["exp"])
+		id = int64(claims["ID"].(float64))
+		email = claims["Email"].(string)
 	}
 	return
 }

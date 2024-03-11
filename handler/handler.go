@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -58,9 +57,9 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 
 // tasks
 func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
-	fmt.Println(c.GetReqHeaders())
+	// validar token
 	token := c.GetReqHeaders()["Token"][0]
-	err = utils.ValidToken(token)
+	_, _, err = utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "5", Message: "get tasks error"})
@@ -73,7 +72,28 @@ func (h Handler) GetTask(c *fiber.Ctx) (err error) {
 }
 
 func (h Handler) PostTask(c *fiber.Ctx) (err error) {
-	return c.SendString("PostTask")
+	task := entity.Task{}
+	err = c.BodyParser(&task)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "post task error"})
+	}
+
+	// validar token
+	if len(c.GetReqHeaders()["Token"]) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "post task error"})
+	}
+	token := c.GetReqHeaders()["Token"][0]
+	id, email, err := utils.ValidToken(token)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "post task error"})
+	}
+
+	// guardar task - validar dados usuario
+	pkg.PostTask(id, email, task)
+
+	return c.Status(http.StatusCreated).SendString("")
 }
 
 func (h Handler) PutTask(c *fiber.Ctx) (err error) {

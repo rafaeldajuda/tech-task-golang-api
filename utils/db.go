@@ -71,7 +71,7 @@ func createTableTask(db *sql.DB, ctx context.Context) {
 	log.Debug("table tarefa ok")
 }
 
-func GetUser(email string, senha string, db *sql.DB) (exist bool, err error) {
+func GetUser(email string, senha string, db *sql.DB) (id int64, exist bool, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
@@ -82,8 +82,13 @@ func GetUser(email string, senha string, db *sql.DB) (exist bool, err error) {
 		return
 	}
 	defer result.Close()
-	exist = result.Next()
-
+	for result.Next() {
+		exist = true
+		err = result.Scan(&id)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
