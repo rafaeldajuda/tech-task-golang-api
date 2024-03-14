@@ -118,7 +118,7 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "post task error"})
 	}
 	token := c.GetReqHeaders()["Token"][0]
-	id, email, err := utils.ValidToken(token)
+	id, _, err := utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "post task error"})
@@ -133,7 +133,7 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 	}
 
 	// guardar task - validar dados usuario
-	idTask, err := pkg.PostTask(id, email, task, h.db)
+	idTask, err := pkg.PostTask(id, "", task, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "post task error"})
@@ -148,7 +148,7 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "put task error"})
 	}
 	token := c.GetReqHeaders()["Token"][0]
-	id, email, err := utils.ValidToken(token)
+	id, _, err := utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "put task error"})
@@ -172,7 +172,7 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	}
 
 	// atualizar task - validar dados usuario
-	err = pkg.PutTask(int64(idTask), id, email, task, h.db)
+	err = pkg.PutTask(int64(idTask), id, "", task, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "put task error"})
@@ -182,5 +182,32 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 }
 
 func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {
-	return c.SendString("DeleteTask")
+	// validar token
+	if len(c.GetReqHeaders()["Token"]) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "delete task error"})
+	}
+	token := c.GetReqHeaders()["Token"][0]
+	id, _, err := utils.ValidToken(token)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "delete task error"})
+	}
+
+	// pegar id task
+	idTask, err := c.ParamsInt("id")
+	if err != nil {
+		if err != nil {
+			log.Errorf("error: %s", err.Error())
+			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "delete task error"})
+		}
+	}
+
+	// delete task
+	err = pkg.DeleteTask(int64(idTask), id, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "delete task error"})
+	}
+
+	return c.Status(http.StatusNoContent).SendString("")
 }

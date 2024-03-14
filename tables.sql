@@ -17,4 +17,6 @@ INSERT INTO usuario (Nome, Email, Senha) VALUES ("?", "?", "?");
 
 INSERT INTO tarefa_status (Descricao) SELECT 'pendente' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'pendente'); 
 INSERT INTO tarefa_status (Descricao) SELECT 'em andamento' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'em andamento'); 
-INSERT INTO tarefa_status (Descricao) SELECT 'concluida' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'concluida'); 
+INSERT INTO tarefa_status (Descricao) SELECT 'concluida' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'concluida');
+
+UPDATE tarefa SET Titulo=?, Descricao=?, `Status`=? WHERE ID=? AND IDUser=?

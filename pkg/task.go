@@ -44,6 +44,12 @@ func PutTask(idTask int64, id int64, email string, task entity.Task, db *sql.DB)
 	return
 }
 
+func DeleteTask(idTask int64, id int64, db *sql.DB) (err error) {
+	// deletar task
+	err = utils.DeleteTask(idTask, id, db)
+	return
+}
+
 func fieldTaskValidation(task entity.Task, operation string) error {
 	if task.Titulo == "" && (operation == "post" || operation == "put") {
 		return errors.New("missing field Titulo")

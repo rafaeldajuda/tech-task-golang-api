@@ -235,3 +235,19 @@ func SelectTask(idTask int64, id int64, email string, db *sql.DB) (task entity.T
 	}
 	return
 }
+
+func DeleteTask(idTask int64, id int64, db *sql.DB) (err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "DELETE FROM tarefa WHERE ID=? AND UserID=?"
+	result, errorDb := db.ExecContext(ctx, query, idTask, id)
+	if errorDb != nil {
+		err = errorDb
+		return
+	}
+	_, err = result.LastInsertId()
+
+	return
+}
