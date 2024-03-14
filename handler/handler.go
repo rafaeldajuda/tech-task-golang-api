@@ -58,27 +58,61 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 // tasks
 func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
 	// validar token
+	if len(c.GetReqHeaders()["Token"]) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get all tasks error"})
+	}
 	token := c.GetReqHeaders()["Token"][0]
-	_, _, err = utils.ValidToken(token)
+	id, email, err := utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "5", Message: "get tasks error"})
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "get all tasks error"})
 	}
-	return c.SendString("GetTasks")
+
+	// listar tasks
+	tasks, err := utils.SelectTasks(0, id, email, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
+	}
+
+	return c.Status(http.StatusOK).JSON(tasks)
 }
 
 func (h Handler) GetTask(c *fiber.Ctx) (err error) {
-	return c.SendString("GetTask")
+	// validar token
+	if len(c.GetReqHeaders()["Token"]) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get all tasks error"})
+	}
+	token := c.GetReqHeaders()["Token"][0]
+	id, email, err := utils.ValidToken(token)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "get all tasks error"})
+	}
+
+	// pegar id task
+	idTask, err := c.ParamsInt("id")
+	if err != nil {
+		if err != nil {
+			log.Errorf("error: %s", err.Error())
+			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "get all tasks error"})
+		}
+	}
+
+	// listar tasks
+	task, err := pkg.GetTask(int64(idTask), id, email, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
+	}
+	if task.ID == 0 {
+		return c.Status(http.StatusOK).JSON(nil)
+	}
+
+	return c.Status(http.StatusOK).JSON(task)
 }
 
 func (h Handler) PostTask(c *fiber.Ctx) (err error) {
-	task := entity.Task{}
-	err = c.BodyParser(&task)
-	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "post task error"})
-	}
-
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "post task error"})
@@ -90,14 +124,61 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "post task error"})
 	}
 
-	// guardar task - validar dados usuario
-	pkg.PostTask(id, email, task)
+	// pegar body
+	task := entity.Task{}
+	err = c.BodyParser(&task)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "post task error"})
+	}
 
-	return c.Status(http.StatusCreated).SendString("")
+	// guardar task - validar dados usuario
+	idTask, err := pkg.PostTask(id, email, task, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "post task error"})
+	}
+
+	return c.Status(http.StatusOK).JSON(entity.PostTaskSuccess{IDTask: idTask})
 }
 
 func (h Handler) PutTask(c *fiber.Ctx) (err error) {
-	return c.SendString("PutTask")
+	// validar token
+	if len(c.GetReqHeaders()["Token"]) == 0 {
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "put task error"})
+	}
+	token := c.GetReqHeaders()["Token"][0]
+	id, email, err := utils.ValidToken(token)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "put task error"})
+	}
+
+	// pegar id task
+	idTask, err := c.ParamsInt("id")
+	if err != nil {
+		if err != nil {
+			log.Errorf("error: %s", err.Error())
+			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "put task error"})
+		}
+	}
+
+	// pegar body
+	task := entity.Task{}
+	err = c.BodyParser(&task)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "put task error"})
+	}
+
+	// atualizar task - validar dados usuario
+	err = pkg.PutTask(int64(idTask), id, email, task, h.db)
+	if err != nil {
+		log.Errorf("error: %s", err.Error())
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "put task error"})
+	}
+
+	return c.Status(http.StatusNoContent).SendString("")
 }
 
 func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {

@@ -3,12 +3,20 @@ package utils
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2/log"
+	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 )
+
+var mapStatus = map[string]int{
+	"pendente":     1,
+	"em andamento": 2,
+	"concluida":    4,
+}
 
 func Connection() *sql.DB {
 	db, err := sql.Open("mysql", "root:admin@tcp(172.17.0.2:3306)/db_techtask")
@@ -103,5 +111,127 @@ func InsertUser(nome string, email string, senha string, db *sql.DB) (err error)
 		return
 	}
 
+	return
+}
+
+func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
+	result, err := db.QueryContext(ctx, query, id, email)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+	if result.Next() {
+		status := mapStatus["pendente"]
+		query := fmt.Sprintf("INSERT INTO tarefa (UserID, Titulo, Descricao, `Status`)"+` VALUES (%d,"%s", "%s", %d)`, id, task.Titulo, task.Descricao, status)
+		fmt.Println(query)
+		result, errorDb := db.ExecContext(ctx, query)
+		if errorDb != nil {
+			err = errorDb
+			return
+		}
+		idTask, err = result.LastInsertId()
+	}
+
+	return
+}
+
+func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *sql.DB) (err error) {
+	dataConclusao := ""
+
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
+	result, err := db.QueryContext(ctx, query, idUser, email)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+
+	if result.Next() {
+		status := mapStatus[task.Status]
+		if status == 0 {
+			err = errors.New("invalid status")
+			return
+		} else if status == 4 {
+			dataConclusao = `, DataDeConclusao="` + time.Now().Format("2006-01-02 15:04:05") + `"`
+		}
+
+		query := fmt.Sprintf(`UPDATE tarefa SET Titulo="%s", Descricao="%s", `+"`Status`=%d"+dataConclusao+` WHERE ID=? AND UserID=?`, task.Titulo, task.Descricao, status)
+		log.Debug(query)
+		result, errorDb := db.ExecContext(ctx, query, idTask, idUser)
+		if errorDb != nil {
+			err = errorDb
+			return
+		}
+		_, err = result.LastInsertId()
+	}
+
+	return
+}
+
+func SelectTasks(idTask int64, id int64, email string, db *sql.DB) (tasks []entity.Task, err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", tarefa.DataDeConclusao, `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? OR UserID=? AND tarefa.`Status`=tarefa_status.ID"
+	result, err := db.QueryContext(ctx, query, idTask, id, id)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+	for result.Next() {
+		task := entity.Task{}
+		var dataCriacao interface{}
+		var dataConclusao interface{}
+		err = result.Scan(&task.ID, &task.Titulo, &task.Descricao, &dataCriacao, &dataConclusao, &task.Status)
+		if err != nil {
+			return
+		}
+		if dataCriacao != nil {
+			task.DataDeCriacao = string(dataCriacao.([]uint8))
+		}
+		if dataConclusao != nil {
+			task.DataDeConclusao = string(dataConclusao.([]uint8))
+		}
+
+		tasks = append(tasks, task)
+	}
+	return
+}
+
+func SelectTask(idTask int64, id int64, email string, db *sql.DB) (task entity.Task, err error) {
+	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", DATE_FORMAT(tarefa.DataDeConclusao," + `"%d/%m/%Y %k:%i:%s")` + ", `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? AND tarefa.`Status`=tarefa_status.ID"
+	result, err := db.QueryContext(ctx, query, idTask, id)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+	for result.Next() {
+
+		var dataCriacao interface{}
+		var dataConclusao interface{}
+		err = result.Scan(&task.ID, &task.Titulo, &task.Descricao, &dataCriacao, &dataConclusao, &task.Status)
+		if err != nil {
+			return
+		}
+		if dataCriacao != nil {
+			task.DataDeCriacao = string(dataCriacao.([]uint8))
+		}
+		if dataConclusao != nil {
+			task.DataDeConclusao = string(dataConclusao.([]uint8))
+		}
+	}
 	return
 }
