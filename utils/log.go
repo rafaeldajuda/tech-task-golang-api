@@ -15,3 +15,9 @@ func ResponseLog(body string, httpStatus int) {
 	log.Debugf("response body: %s", body)
 	log.Debugf("response http status: %d", httpStatus)
 }
+
+func ResponseError(err string, body string, httpStatus int) {
+	log.Errorf("response error: %s", err)
+	log.Errorf("response error - body: %s", body)
+	log.Errorf("response error - http status: %d", httpStatus)
+}

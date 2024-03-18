@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/log"
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 	"github.com/rafaeldajuda/tech-task-golang-api/pkg"
 	"github.com/rafaeldajuda/tech-task-golang-api/utils"
@@ -28,15 +27,19 @@ func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
 	user := entity.User{}
 	err = c.BodyParser(&user)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "3", Message: "login error"})
+		bodyError := entity.AppError{Code: "3", Message: "login error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// gerar token
 	token, err := pkg.Login(user, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "4", Message: "login error"})
+		bodyError := entity.AppError{Code: "3", Message: "login error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
@@ -51,14 +54,18 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 	user := entity.User{}
 	err = c.BodyParser(&user)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "1", Message: "register error"})
+		bodyError := entity.AppError{Code: "1", Message: "register error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	err = pkg.Register(user, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "2", Message: "register error"})
+		bodyError := entity.AppError{Code: "2", Message: "register error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
@@ -78,15 +85,19 @@ func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
 	token := c.GetReqHeaders()["Token"][0]
 	id, email, err := utils.ValidToken(token)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "get all tasks error"})
+		bodyError := entity.AppError{Code: "7", Message: "get all tasks error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// listar tasks
 	tasks, err := utils.SelectTasks(0, id, email, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
+		bodyError := entity.AppError{Code: "8", Message: "get all tasks error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
@@ -101,29 +112,35 @@ func (h Handler) GetTask(c *fiber.Ctx) (err error) {
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get all tasks error"})
+		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get task error"})
 	}
 	token := c.GetReqHeaders()["Token"][0]
 	id, email, err := utils.ValidToken(token)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "get all tasks error"})
+		bodyError := entity.AppError{Code: "7", Message: "get task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// pegar id task
 	idTask, err := c.ParamsInt("id")
 	if err != nil {
 		if err != nil {
-			log.Errorf("error: %s", err.Error())
-			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "get all tasks error"})
+			bodyError := entity.AppError{Code: "9", Message: "get task error"}
+			bodyErrorS, _ := json.Marshal(bodyError)
+			utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+			return c.Status(http.StatusBadRequest).JSON(bodyError)
 		}
 	}
 
 	// listar tasks
 	task, err := pkg.GetTask(int64(idTask), id, email, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
+		bodyError := entity.AppError{Code: "8", Message: "get task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 	if task.ID == 0 {
 		// response
@@ -148,23 +165,29 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 	token := c.GetReqHeaders()["Token"][0]
 	id, email, err := utils.ValidToken(token)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "post task error"})
+		bodyError := entity.AppError{Code: "7", Message: "post task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// pegar body
 	task := entity.Task{}
 	err = c.BodyParser(&task)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "post task error"})
+		bodyError := entity.AppError{Code: "8", Message: "post task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// guardar task - validar dados usuario
 	idTask, err := pkg.PostTask(id, email, task, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "post task error"})
+		bodyError := entity.AppError{Code: "9", Message: "post task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
@@ -185,16 +208,20 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	token := c.GetReqHeaders()["Token"][0]
 	id, email, err := utils.ValidToken(token)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "put task error"})
+		bodyError := entity.AppError{Code: "7", Message: "put task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// pegar id task
 	idTask, err := c.ParamsInt("id")
 	if err != nil {
 		if err != nil {
-			log.Errorf("error: %s", err.Error())
-			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "put task error"})
+			bodyError := entity.AppError{Code: "9", Message: "put task error"}
+			bodyErrorS, _ := json.Marshal(bodyError)
+			utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+			return c.Status(http.StatusBadRequest).JSON(bodyError)
 		}
 	}
 
@@ -202,15 +229,19 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	task := entity.Task{}
 	err = c.BodyParser(&task)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "put task error"})
+		bodyError := entity.AppError{Code: "8", Message: "put task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// atualizar task - validar dados usuario
 	err = pkg.PutTask(int64(idTask), id, email, task, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "put task error"})
+		bodyError := entity.AppError{Code: "10", Message: "put task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
@@ -229,24 +260,30 @@ func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {
 	token := c.GetReqHeaders()["Token"][0]
 	id, _, err := utils.ValidToken(token)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "delete task error"})
+		bodyError := entity.AppError{Code: "7", Message: "delete task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// pegar id task
 	idTask, err := c.ParamsInt("id")
 	if err != nil {
 		if err != nil {
-			log.Errorf("error: %s", err.Error())
-			return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "delete task error"})
+			bodyError := entity.AppError{Code: "9", Message: "delete task error"}
+			bodyErrorS, _ := json.Marshal(bodyError)
+			utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+			return c.Status(http.StatusBadRequest).JSON(bodyError)
 		}
 	}
 
 	// delete task
 	err = pkg.DeleteTask(int64(idTask), id, h.db)
 	if err != nil {
-		log.Errorf("error: %s", err.Error())
-		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "delete task error"})
+		bodyError := entity.AppError{Code: "10", Message: "delete task error"}
+		bodyErrorS, _ := json.Marshal(bodyError)
+		utils.ResponseError(err.Error(), string(bodyErrorS), http.StatusBadRequest)
+		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
 	// response
