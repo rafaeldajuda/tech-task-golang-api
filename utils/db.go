@@ -18,8 +18,9 @@ var mapStatus = map[string]int{
 	"concluida":    4,
 }
 
-func Connection() *sql.DB {
-	db, err := sql.Open("mysql", "root:admin@tcp(172.17.0.2:3306)/db_techtask")
+func Connection(config entity.Config) *sql.DB {
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.DBUser, config.DBPassword, config.DBHost, config.DBPort, config.DBName)
+	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
 		panic(err)
 	}
