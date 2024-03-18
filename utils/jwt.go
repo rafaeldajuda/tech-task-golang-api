@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gofiber/fiber/v2/log"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 )
@@ -24,7 +25,7 @@ func GenToken(user entity.User) (token string, err error) {
 func ValidToken(token string) (id int64, email string, err error) {
 	tk, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return []byte(SECRET_KEY), nil
 	})
@@ -33,7 +34,7 @@ func ValidToken(token string) (id int64, email string, err error) {
 	}
 
 	if claims, ok := tk.Claims.(jwt.MapClaims); ok {
-		fmt.Println(claims["ID"], claims["Email"], claims["exp"])
+		log.Debugf("token claims: %v %v %v", claims["ID"], claims["Email"], claims["exp"])
 		id = int64(claims["ID"].(float64))
 		email = claims["Email"].(string)
 	}

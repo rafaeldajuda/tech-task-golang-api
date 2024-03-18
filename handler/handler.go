@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -22,7 +23,7 @@ func NewHandler(db *sql.DB) Handler {
 // authentication
 func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	user := entity.User{}
 	err = c.BodyParser(&user)
@@ -45,7 +46,7 @@ func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
 
 func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	user := entity.User{}
 	err = c.BodyParser(&user)
@@ -68,7 +69,7 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 // tasks
 func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
@@ -89,13 +90,14 @@ func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
 	}
 
 	// response
-	utils.ResponseLog("", http.StatusOK)
+	responseBody, _ := json.Marshal(tasks)
+	utils.ResponseLog(string(responseBody), http.StatusOK)
 	return c.Status(http.StatusOK).JSON(tasks)
 }
 
 func (h Handler) GetTask(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
@@ -124,24 +126,27 @@ func (h Handler) GetTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
 	}
 	if task.ID == 0 {
+		// response
+		utils.ResponseLog("null", http.StatusOK)
 		return c.Status(http.StatusOK).JSON(nil)
 	}
 
 	// response
-	utils.ResponseLog("", http.StatusOK)
+	responseBody, _ := json.Marshal(task)
+	utils.ResponseLog(string(responseBody), http.StatusOK)
 	return c.Status(http.StatusOK).JSON(task)
 }
 
 func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "post task error"})
 	}
 	token := c.GetReqHeaders()["Token"][0]
-	id, _, err := utils.ValidToken(token)
+	id, email, err := utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "post task error"})
@@ -156,27 +161,29 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 	}
 
 	// guardar task - validar dados usuario
-	idTask, err := pkg.PostTask(id, "", task, h.db)
+	idTask, err := pkg.PostTask(id, email, task, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "post task error"})
 	}
 
 	// response
-	utils.ResponseLog("", http.StatusOK)
-	return c.Status(http.StatusOK).JSON(entity.PostTaskSuccess{IDTask: idTask})
+	response := entity.PostTaskSuccess{IDTask: idTask}
+	responseBody, _ := json.Marshal(response)
+	utils.ResponseLog(string(responseBody), http.StatusOK)
+	return c.Status(http.StatusOK).JSON(response)
 }
 
 func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "put task error"})
 	}
 	token := c.GetReqHeaders()["Token"][0]
-	id, _, err := utils.ValidToken(token)
+	id, email, err := utils.ValidToken(token)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "7", Message: "put task error"})
@@ -200,7 +207,7 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	}
 
 	// atualizar task - validar dados usuario
-	err = pkg.PutTask(int64(idTask), id, "", task, h.db)
+	err = pkg.PutTask(int64(idTask), id, email, task, h.db)
 	if err != nil {
 		log.Errorf("error: %s", err.Error())
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "put task error"})
@@ -213,7 +220,7 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 
 func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {
 	// input log
-	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+	utils.InputLog(string(c.Context().Path()), c.Request().Header.String(), string(c.Body()))
 
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {

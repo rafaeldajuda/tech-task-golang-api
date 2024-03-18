@@ -86,6 +86,7 @@ func GetUser(email string, senha string, db *sql.DB) (id int64, exist bool, err 
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE Email=? AND Senha=?"
+	log.Debugf("query: %s", query)
 	result, err := db.QueryContext(ctx, query, email, senha)
 	if err != nil {
 		return
@@ -107,6 +108,7 @@ func InsertUser(nome string, email string, senha string, db *sql.DB) (err error)
 	defer cancel()
 
 	query := fmt.Sprintf(`INSERT INTO usuario (Nome, Email, Senha) VALUES ("%s", "%s", "%s");`, nome, email, senha)
+	log.Debugf("query: %s", query)
 	_, err = db.ExecContext(ctx, query)
 	if err != nil {
 		return
@@ -121,6 +123,7 @@ func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask in
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
+	log.Debugf("query: %s", query)
 	result, err := db.QueryContext(ctx, query, id, email)
 	if err != nil {
 		return
@@ -129,7 +132,7 @@ func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask in
 	if result.Next() {
 		status := mapStatus["pendente"]
 		query := fmt.Sprintf("INSERT INTO tarefa (UserID, Titulo, Descricao, `Status`)"+` VALUES (%d,"%s", "%s", %d)`, id, task.Titulo, task.Descricao, status)
-		fmt.Println(query)
+		log.Debugf("query: %s", query)
 		result, errorDb := db.ExecContext(ctx, query)
 		if errorDb != nil {
 			err = errorDb
@@ -149,6 +152,7 @@ func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
+	log.Debugf("query: %s", query)
 	result, err := db.QueryContext(ctx, query, idUser, email)
 	if err != nil {
 		return
@@ -165,7 +169,7 @@ func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *
 		}
 
 		query := fmt.Sprintf(`UPDATE tarefa SET Titulo="%s", Descricao="%s", `+"`Status`=%d"+dataConclusao+` WHERE ID=? AND UserID=?`, task.Titulo, task.Descricao, status)
-		log.Debug(query)
+		log.Debugf("query: %s", query)
 		result, errorDb := db.ExecContext(ctx, query, idTask, idUser)
 		if errorDb != nil {
 			err = errorDb
@@ -183,6 +187,7 @@ func SelectTasks(idTask int64, id int64, email string, db *sql.DB) (tasks []enti
 	defer cancel()
 
 	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", tarefa.DataDeConclusao, `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? OR UserID=? AND tarefa.`Status`=tarefa_status.ID"
+	log.Debugf("query: %s", query)
 	result, err := db.QueryContext(ctx, query, idTask, id, id)
 	if err != nil {
 		return
@@ -214,6 +219,7 @@ func SelectTask(idTask int64, id int64, email string, db *sql.DB) (task entity.T
 	defer cancel()
 
 	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", DATE_FORMAT(tarefa.DataDeConclusao," + `"%d/%m/%Y %k:%i:%s")` + ", `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? AND tarefa.`Status`=tarefa_status.ID"
+	log.Debugf("query: %s", query)
 	result, err := db.QueryContext(ctx, query, idTask, id)
 	if err != nil {
 		return
@@ -243,6 +249,7 @@ func DeleteTask(idTask int64, id int64, db *sql.DB) (err error) {
 	defer cancel()
 
 	query := "DELETE FROM tarefa WHERE ID=? AND UserID=?"
+	log.Debugf("query: %s", query)
 	result, errorDb := db.ExecContext(ctx, query, idTask, id)
 	if errorDb != nil {
 		err = errorDb

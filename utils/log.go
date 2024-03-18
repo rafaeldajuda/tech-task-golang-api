@@ -13,5 +13,5 @@ func ResponseLog(body string, httpStatus int) {
 		body = "empty"
 	}
 	log.Debugf("response body: %s", body)
-	log.Debugf("reponse http status: %d", httpStatus)
+	log.Debugf("response http status: %d", httpStatus)
 }
