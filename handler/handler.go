@@ -21,6 +21,9 @@ func NewHandler(db *sql.DB) Handler {
 
 // authentication
 func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	user := entity.User{}
 	err = c.BodyParser(&user)
 	if err != nil {
@@ -35,10 +38,15 @@ func (h Handler) PostLogin(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "4", Message: "login error"})
 	}
 
+	// response
+	utils.ResponseLog(token, http.StatusOK)
 	return c.Status(http.StatusOK).SendString(token)
 }
 
 func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	user := entity.User{}
 	err = c.BodyParser(&user)
 	if err != nil {
@@ -52,11 +60,16 @@ func (h Handler) PostRegister(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "2", Message: "register error"})
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusCreated)
 	return c.Status(http.StatusCreated).SendString("")
 }
 
 // tasks
 func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get all tasks error"})
@@ -75,10 +88,15 @@ func (h Handler) GetTasks(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "8", Message: "get all tasks error"})
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusOK)
 	return c.Status(http.StatusOK).JSON(tasks)
 }
 
 func (h Handler) GetTask(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "get all tasks error"})
@@ -109,10 +127,15 @@ func (h Handler) GetTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusOK).JSON(nil)
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusOK)
 	return c.Status(http.StatusOK).JSON(task)
 }
 
 func (h Handler) PostTask(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "post task error"})
@@ -139,10 +162,15 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "9", Message: "post task error"})
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusOK)
 	return c.Status(http.StatusOK).JSON(entity.PostTaskSuccess{IDTask: idTask})
 }
 
 func (h Handler) PutTask(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "put task error"})
@@ -178,10 +206,15 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "put task error"})
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusNoContent)
 	return c.Status(http.StatusNoContent).SendString("")
 }
 
 func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {
+	// input log
+	utils.InputLog(c.Route().Path, c.Request().Header.String(), string(c.Body()))
+
 	// validar token
 	if len(c.GetReqHeaders()["Token"]) == 0 {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "6", Message: "delete task error"})
@@ -209,5 +242,7 @@ func (h Handler) DeleteTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(entity.AppError{Code: "10", Message: "delete task error"})
 	}
 
+	// response
+	utils.ResponseLog("", http.StatusNoContent)
 	return c.Status(http.StatusNoContent).SendString("")
 }
