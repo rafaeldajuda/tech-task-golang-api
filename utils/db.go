@@ -12,12 +12,6 @@ import (
 	"github.com/rafaeldajuda/tech-task-golang-api/entity"
 )
 
-var mapStatus = map[string]int{
-	"pendente":     1,
-	"em andamento": 2,
-	"concluida":    4,
-}
-
 func Connection(config entity.Config) *sql.DB {
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.DBUser, config.DBPassword, config.DBHost, config.DBPort, config.DBName)
 	db, err := sql.Open("mysql", connectionString)
@@ -36,13 +30,16 @@ func Connection(config entity.Config) *sql.DB {
 	return db
 }
 
-func ConfigTables(db *sql.DB) {
+func ConfigTables(db *sql.DB) (mapStatus map[string]int) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 	createTableUser(db, ctx)
 	createTableTaskStatus(db, ctx)
 	createTableTask(db, ctx)
+	insertTaskStatus(db, ctx)
+	mapStatus = selectTaskStatus(db, ctx)
+	return
 }
 
 func createTableUser(db *sql.DB, ctx context.Context) {
@@ -78,6 +75,42 @@ func createTableTask(db *sql.DB, ctx context.Context) {
 		panic(err)
 	}
 	log.Debug("table tarefa ok")
+}
+
+func insertTaskStatus(db *sql.DB, ctx context.Context) {
+	queryList := []string{
+		`INSERT INTO tarefa_status (Descricao) SELECT 'pendente' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'pendente'); `,
+		`INSERT INTO tarefa_status (Descricao) SELECT 'em andamento' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'em andamento'); `,
+		`INSERT INTO tarefa_status (Descricao) SELECT 'concluida' WHERE NOT EXISTS (SELECT 1 FROM tarefa_status WHERE Descricao = 'concluida');`}
+
+	for _, query := range queryList {
+		_, err := db.ExecContext(ctx, query)
+		if err != nil {
+			panic(err)
+		}
+	}
+	log.Debug("insert tarefa_status ok")
+}
+
+func selectTaskStatus(db *sql.DB, ctx context.Context) (mapStatus map[string]int) {
+	mapStatus = make(map[string]int)
+	query := "SELECT tarefa_status.ID, tarefa_status.Descricao FROM tarefa_status ORDER BY tarefa_status.ID ASC;"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return
+	}
+	defer result.Close()
+	for result.Next() {
+		var id int
+		var desc string
+		err := result.Scan(&id, &desc)
+		if err != nil {
+			panic(err)
+		}
+		mapStatus[desc] = id
+	}
+
+	return
 }
 
 func GetUser(rid string, email string, senha string, db *sql.DB) (id int64, exist bool, err error) {
@@ -117,7 +150,7 @@ func InsertUser(rid string, nome string, email string, senha string, db *sql.DB)
 	return
 }
 
-func InsertTask(rid string, id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
+func InsertTask(rid string, id int64, email string, task entity.Task, db *sql.DB, mapStatus map[string]int) (idTask int64, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
@@ -144,7 +177,7 @@ func InsertTask(rid string, id int64, email string, task entity.Task, db *sql.DB
 	return
 }
 
-func UpdateTask(rid string, idTask int64, idUser int64, email string, task entity.Task, db *sql.DB) (err error) {
+func UpdateTask(rid string, idTask int64, idUser int64, email string, task entity.Task, db *sql.DB, mapStatus map[string]int) (err error) {
 	dataConclusao := ""
 
 	ctx := context.Background()

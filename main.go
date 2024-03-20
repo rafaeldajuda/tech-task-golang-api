@@ -45,10 +45,10 @@ func main() {
 
 	// database
 	db := utils.Connection(config)
-	utils.ConfigTables(db)
+	mapStatus := utils.ConfigTables(db)
 
 	// app
-	handler := handler.NewHandler(db)
+	handler := handler.NewHandler(db, mapStatus)
 	app := fiber.New()
 
 	app.Post(config.AppRoutes.PostLogin, handler.PostLogin)

@@ -20,7 +20,7 @@ func GetTask(rid string, idTask int64, id int64, email string, db *sql.DB) (task
 	return
 }
 
-func PostTask(rid string, id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
+func PostTask(rid string, id int64, email string, task entity.Task, db *sql.DB, mapStatus map[string]int) (idTask int64, err error) {
 	// validar entrada
 	err = fieldTaskValidation(task, "post")
 	if err != nil {
@@ -28,11 +28,11 @@ func PostTask(rid string, id int64, email string, task entity.Task, db *sql.DB) 
 	}
 
 	// guardar task - validar dados usuario
-	idTask, err = utils.InsertTask(rid, id, email, task, db)
+	idTask, err = utils.InsertTask(rid, id, email, task, db, mapStatus)
 	return
 }
 
-func PutTask(rid string, idTask int64, id int64, email string, task entity.Task, db *sql.DB) (err error) {
+func PutTask(rid string, idTask int64, id int64, email string, task entity.Task, db *sql.DB, mapStatus map[string]int) (err error) {
 	// validar entrada
 	err = fieldTaskValidation(task, "put")
 	if err != nil {
@@ -40,7 +40,7 @@ func PutTask(rid string, idTask int64, id int64, email string, task entity.Task,
 	}
 
 	// guardar task - validar dados usuario
-	err = utils.UpdateTask(rid, idTask, id, email, task, db)
+	err = utils.UpdateTask(rid, idTask, id, email, task, db, mapStatus)
 	return
 }
 

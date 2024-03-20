@@ -13,11 +13,12 @@ import (
 )
 
 type Handler struct {
-	db *sql.DB
+	db        *sql.DB
+	mapStatus map[string]int
 }
 
-func NewHandler(db *sql.DB) Handler {
-	return Handler{db: db}
+func NewHandler(db *sql.DB, mapStatus map[string]int) Handler {
+	return Handler{db: db, mapStatus: mapStatus}
 }
 
 // authentication
@@ -197,8 +198,8 @@ func (h Handler) PostTask(c *fiber.Ctx) (err error) {
 		return c.Status(http.StatusBadRequest).JSON(bodyError)
 	}
 
-	// guardar task - validar dados usuario
-	idTask, err := pkg.PostTask(rid, id, email, task, h.db)
+	// guardar task - validar dados usuarios
+	idTask, err := pkg.PostTask(rid, id, email, task, h.db, h.mapStatus)
 	if err != nil {
 		bodyError := entity.AppError{Code: "4", Message: "post task error"}
 		bodyErrorS, _ := json.Marshal(bodyError)
@@ -255,7 +256,7 @@ func (h Handler) PutTask(c *fiber.Ctx) (err error) {
 	}
 
 	// atualizar task - validar dados usuario
-	err = pkg.PutTask(rid, int64(idTask), id, email, task, h.db)
+	err = pkg.PutTask(rid, int64(idTask), id, email, task, h.db, h.mapStatus)
 	if err != nil {
 		bodyError := entity.AppError{Code: "5", Message: "put task error"}
 		bodyErrorS, _ := json.Marshal(bodyError)
