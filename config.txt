@@ -1,7 +1,0 @@
-docker run --name my-mysql -e MYSQL_ROOT_PASSWORD=admin -d mysql:latest
-user: root
-pass: admin
-port: 3306
-db: db_techtask
-
-CREATE USER 'admin'@'%' IDENTIFIED BY 'admin';

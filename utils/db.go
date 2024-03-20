@@ -18,7 +18,7 @@ func Connection(config entity.Config) *sql.DB {
 	if err != nil {
 		panic(err)
 	}
-	// See "Important settings" section.
+
 	db.SetConnMaxLifetime(-1)
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)

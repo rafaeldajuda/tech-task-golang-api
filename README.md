@@ -42,3 +42,27 @@ Validação de Dados: A API deve validar os dados recebidos para garantir que es
     * POST /api/tasks: Cria uma nova tarefa.
     * PUT /api/tasks/{id}: Atualiza uma tarefa existente.
     * DELETE /api/tasks/{id}: Remove uma tarefa existente.
+
+## Como Rodar o Projeto
+
+A maior parte das configurações do projeto estão no arquivo ``.env``. Para rodar o projeto bastar subir o mysql e o server.
+
+Subir mysql com docker:
+```cmd
+docker run --name my-mysql -e MYSQL_ROOT_PASSWORD=admin -e MYSQL_DATABASE=db_techtask -d mysql:latest
+```
+
+Subir o mysql com docker-compose:
+```
+docker-compose up
+```
+
+Subir o server:
+```cmd
+go run main.go
+```
+
+OBS: Para acessar o container do mysql rodar o seguinte comando:
+```
+docker exec -it my-mysql bash
+```
