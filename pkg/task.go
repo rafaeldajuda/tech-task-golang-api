@@ -8,19 +8,19 @@ import (
 	"github.com/rafaeldajuda/tech-task-golang-api/utils"
 )
 
-func GetAllTasks(idTask int64, id int64, email string, db *sql.DB) (tasks []entity.Task, err error) {
+func GetAllTasks(rid string, idTask int64, id int64, email string, db *sql.DB) (tasks []entity.Task, err error) {
 	// listar todas as tasks do usuário
-	tasks, err = utils.SelectTasks(idTask, id, email, db)
+	tasks, err = utils.SelectTasks(rid, idTask, id, email, db)
 	return
 }
 
-func GetTask(idTask int64, id int64, email string, db *sql.DB) (task entity.Task, err error) {
+func GetTask(rid string, idTask int64, id int64, email string, db *sql.DB) (task entity.Task, err error) {
 	// listar todas as tasks do usuário
-	task, err = utils.SelectTask(idTask, id, email, db)
+	task, err = utils.SelectTask(rid, idTask, id, email, db)
 	return
 }
 
-func PostTask(id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
+func PostTask(rid string, id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
 	// validar entrada
 	err = fieldTaskValidation(task, "post")
 	if err != nil {
@@ -28,11 +28,11 @@ func PostTask(id int64, email string, task entity.Task, db *sql.DB) (idTask int6
 	}
 
 	// guardar task - validar dados usuario
-	idTask, err = utils.InsertTask(id, email, task, db)
+	idTask, err = utils.InsertTask(rid, id, email, task, db)
 	return
 }
 
-func PutTask(idTask int64, id int64, email string, task entity.Task, db *sql.DB) (err error) {
+func PutTask(rid string, idTask int64, id int64, email string, task entity.Task, db *sql.DB) (err error) {
 	// validar entrada
 	err = fieldTaskValidation(task, "put")
 	if err != nil {
@@ -40,13 +40,13 @@ func PutTask(idTask int64, id int64, email string, task entity.Task, db *sql.DB)
 	}
 
 	// guardar task - validar dados usuario
-	err = utils.UpdateTask(idTask, id, email, task, db)
+	err = utils.UpdateTask(rid, idTask, id, email, task, db)
 	return
 }
 
-func DeleteTask(idTask int64, id int64, db *sql.DB) (err error) {
+func DeleteTask(rid string, idTask int64, id int64, db *sql.DB) (err error) {
 	// deletar task
-	err = utils.DeleteTask(idTask, id, db)
+	err = utils.DeleteTask(rid, idTask, id, db)
 	return
 }
 

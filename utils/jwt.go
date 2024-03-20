@@ -22,7 +22,7 @@ func GenToken(user entity.User) (token string, err error) {
 	return
 }
 
-func ValidToken(token string) (id int64, email string, err error) {
+func ValidToken(rid string, token string) (id int64, email string, err error) {
 	tk, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
@@ -34,7 +34,7 @@ func ValidToken(token string) (id int64, email string, err error) {
 	}
 
 	if claims, ok := tk.Claims.(jwt.MapClaims); ok {
-		log.Debugf("token claims: %v %v %v", claims["ID"], claims["Email"], claims["exp"])
+		log.Debugf("[%s] token claims: %v %v %v", rid, claims["ID"], claims["Email"], claims["exp"])
 		id = int64(claims["ID"].(float64))
 		email = claims["Email"].(string)
 	}

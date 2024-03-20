@@ -9,7 +9,7 @@ import (
 	"github.com/rafaeldajuda/tech-task-golang-api/utils"
 )
 
-func Login(user entity.User, db *sql.DB) (token string, err error) {
+func Login(rid string, user entity.User, db *sql.DB) (token string, err error) {
 	// validar campos
 	err = fieldUserValidation(user, "login")
 	if err != nil {
@@ -17,7 +17,7 @@ func Login(user entity.User, db *sql.DB) (token string, err error) {
 	}
 
 	// validar no banco de dados
-	id, exist, err := utils.GetUser(user.Email, user.Senha, db)
+	id, exist, err := utils.GetUser(rid, user.Email, user.Senha, db)
 	if err != nil {
 		return
 	}
@@ -35,14 +35,14 @@ func Login(user entity.User, db *sql.DB) (token string, err error) {
 	return
 }
 
-func Register(user entity.User, db *sql.DB) (err error) {
+func Register(rid string, user entity.User, db *sql.DB) (err error) {
 	err = fieldUserValidation(user, "register")
 	if err != nil {
 		return
 	}
 
 	// validar no banco de dados
-	_, exist, err := utils.GetUser(user.Email, user.Senha, db)
+	_, exist, err := utils.GetUser(rid, user.Email, user.Senha, db)
 	if err != nil {
 		return
 	}
@@ -51,7 +51,7 @@ func Register(user entity.User, db *sql.DB) (err error) {
 	}
 
 	// guardar usuário
-	err = utils.InsertUser(user.Nome, user.Email, user.Senha, db)
+	err = utils.InsertUser(rid, user.Nome, user.Email, user.Senha, db)
 	if err != nil {
 		return
 	}

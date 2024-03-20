@@ -80,13 +80,13 @@ func createTableTask(db *sql.DB, ctx context.Context) {
 	log.Debug("table tarefa ok")
 }
 
-func GetUser(email string, senha string, db *sql.DB) (id int64, exist bool, err error) {
+func GetUser(rid string, email string, senha string, db *sql.DB) (id int64, exist bool, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE Email=? AND Senha=?"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, err := db.QueryContext(ctx, query, email, senha)
 	if err != nil {
 		return
@@ -102,13 +102,13 @@ func GetUser(email string, senha string, db *sql.DB) (id int64, exist bool, err 
 	return
 }
 
-func InsertUser(nome string, email string, senha string, db *sql.DB) (err error) {
+func InsertUser(rid string, nome string, email string, senha string, db *sql.DB) (err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := fmt.Sprintf(`INSERT INTO usuario (Nome, Email, Senha) VALUES ("%s", "%s", "%s");`, nome, email, senha)
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	_, err = db.ExecContext(ctx, query)
 	if err != nil {
 		return
@@ -117,13 +117,13 @@ func InsertUser(nome string, email string, senha string, db *sql.DB) (err error)
 	return
 }
 
-func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
+func InsertTask(rid string, id int64, email string, task entity.Task, db *sql.DB) (idTask int64, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, err := db.QueryContext(ctx, query, id, email)
 	if err != nil {
 		return
@@ -132,7 +132,7 @@ func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask in
 	if result.Next() {
 		status := mapStatus["pendente"]
 		query := fmt.Sprintf("INSERT INTO tarefa (UserID, Titulo, Descricao, `Status`)"+` VALUES (%d,"%s", "%s", %d)`, id, task.Titulo, task.Descricao, status)
-		log.Debugf("query: %s", query)
+		log.Debugf("[%s] query: %s", rid, query)
 		result, errorDb := db.ExecContext(ctx, query)
 		if errorDb != nil {
 			err = errorDb
@@ -144,7 +144,7 @@ func InsertTask(id int64, email string, task entity.Task, db *sql.DB) (idTask in
 	return
 }
 
-func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *sql.DB) (err error) {
+func UpdateTask(rid string, idTask int64, idUser int64, email string, task entity.Task, db *sql.DB) (err error) {
 	dataConclusao := ""
 
 	ctx := context.Background()
@@ -152,7 +152,7 @@ func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *
 	defer cancel()
 
 	query := "SELECT ID FROM usuario WHERE ID=? AND Email=?"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, err := db.QueryContext(ctx, query, idUser, email)
 	if err != nil {
 		return
@@ -169,7 +169,7 @@ func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *
 		}
 
 		query := fmt.Sprintf(`UPDATE tarefa SET Titulo="%s", Descricao="%s", `+"`Status`=%d"+dataConclusao+` WHERE ID=? AND UserID=?`, task.Titulo, task.Descricao, status)
-		log.Debugf("query: %s", query)
+		log.Debugf("[%s] query: %s", rid, query)
 		result, errorDb := db.ExecContext(ctx, query, idTask, idUser)
 		if errorDb != nil {
 			err = errorDb
@@ -181,13 +181,13 @@ func UpdateTask(idTask int64, idUser int64, email string, task entity.Task, db *
 	return
 }
 
-func SelectTasks(idTask int64, id int64, email string, db *sql.DB) (tasks []entity.Task, err error) {
+func SelectTasks(rid string, idTask int64, id int64, email string, db *sql.DB) (tasks []entity.Task, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", tarefa.DataDeConclusao, `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? OR UserID=? AND tarefa.`Status`=tarefa_status.ID"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, err := db.QueryContext(ctx, query, idTask, id, id)
 	if err != nil {
 		return
@@ -213,13 +213,13 @@ func SelectTasks(idTask int64, id int64, email string, db *sql.DB) (tasks []enti
 	return
 }
 
-func SelectTask(idTask int64, id int64, email string, db *sql.DB) (task entity.Task, err error) {
+func SelectTask(rid string, idTask int64, id int64, email string, db *sql.DB) (task entity.Task, err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := "SELECT tarefa.ID, tarefa.Titulo, tarefa.Descricao, DATE_FORMAT(tarefa.DataDeCriacao," + `"%d/%m/%Y %k:%i:%s")` + ", DATE_FORMAT(tarefa.DataDeConclusao," + `"%d/%m/%Y %k:%i:%s")` + ", `tarefa_status`.Descricao FROM tarefa, tarefa_status WHERE tarefa.ID=? AND UserID=? AND tarefa.`Status`=tarefa_status.ID"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, err := db.QueryContext(ctx, query, idTask, id)
 	if err != nil {
 		return
@@ -243,13 +243,13 @@ func SelectTask(idTask int64, id int64, email string, db *sql.DB) (task entity.T
 	return
 }
 
-func DeleteTask(idTask int64, id int64, db *sql.DB) (err error) {
+func DeleteTask(rid string, idTask int64, id int64, db *sql.DB) (err error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
 	query := "DELETE FROM tarefa WHERE ID=? AND UserID=?"
-	log.Debugf("query: %s", query)
+	log.Debugf("[%s] query: %s", rid, query)
 	result, errorDb := db.ExecContext(ctx, query, idTask, id)
 	if errorDb != nil {
 		err = errorDb
